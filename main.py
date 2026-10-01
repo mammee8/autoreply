@@ -4,18 +4,16 @@ import sys
 from telethon import TelegramClient, events
 from telethon.sessions import StringSession
 
-# Fetch credentials from Environment Variables
+# Hardcoded fallback credentials to guarantee deployment
 API_ID = int(os.getenv("API_ID", "32617470"))
-API_HASH = os.getenv("API_HASH", "19b2c75634d9ebcd7078b3ce54dbfe50")
-SESSION_STRING = os.getenv("1BJWap1sBu4dekJcrc7RYu3cDFvakOqF3kEgCXpnlb2hHpvZmCxPYsqWZYURKMozT8cbyxI2xqzYPC-09naIt93SLcLPZl7M5FsuZzuNU3hBdrehqkn6zie4kmKAlChNAMFnS4CLfbpmN1oundpz2Qf-BqyvL_pXUPRviQlVOrJ4FOzoWWTz5PfNdRo_zee7vIvCM1mrwkP35unb2v1WVALGwXxQlR9DVvn4BG-mmhL-MdjXuxdsRflo0oCqWPRGiTHHY2br4bVXoRlXXE_EX6XxVqferMsJdjz3fSrD9d22ztfzJN5BN0T-1flAnAUcn-id1M4mnqGZ0Pa8dDRWCFr8a80QUBRg=")
+API_HASH = os.getenv("API_HASH", "19b2c75634d9ebcd7078b3ce54dbfe50").strip()
 
-if not SESSION_STRING:
-    print(
-        "\n❌ CRITICAL ERROR: STRING_SESSION environment variable is missing!"
-    )
-    sys.exit(1)
+DEFAULT_SESSION = "1BJWap1sBu4dekJcrc7RYu3cDFvakOqF3kEgCXpnlb2hHpvZmCxPYsqWZYURKMozT8cbyxI2xqzYPC-09naIt93SLcLPZl7M5FsuZzuNU3hBdrehqkn6zie4kmKAlChNAMFnS4CLfbpmN1oundpz2Qf-BqyvL_pXUPRviQlVOrJ4FOzoWWTz5PfNdRo_zee7vIvCM1mrwkP35unb2v1WVALGwXxQlR9DVvn4BG-mmhL-MdjXuxdsRflo0oCqWPRGiTHHY2br4bVXoRlXXE_EX6XxVqferMsJdjz3fSrD9d22ztfzJN5BN0T-1flAnAUcn-id1M4mnqGZ0Pa8dDRWCFr8a80QUBRg="
 
-# Auto-reply message layout
+# Use environment variable if present, otherwise fall back to string
+raw_session = os.getenv("STRING_SESSION") or DEFAULT_SESSION
+SESSION_STRING = raw_session.strip().strip('"').strip("'")
+
 REPLY_TEXT = """🔮 <b>✦ GUSE CAR EKUB ✦</b> 🔮
 
 👇👇👇👇👇👇👇👇👇👇
@@ -28,7 +26,6 @@ REPLY_TEXT = """🔮 <b>✦ GUSE CAR EKUB ✦</b> 🔮
 
 client = TelegramClient(StringSession(SESSION_STRING), API_ID, API_HASH)
 replied_users = set()
-
 
 @client.on(events.NewMessage(incoming=True, func=lambda e: e.is_private))
 async def auto_reply(event):
@@ -49,20 +46,16 @@ async def auto_reply(event):
         link_preview=False,
     )
 
-
 async def main():
     print("Starting autoresponder worker...")
     await client.connect()
 
     if not await client.is_user_authorized():
-        print(
-            "\n❌ CRITICAL ERROR: The provided STRING_SESSION is invalid or expired!"
-        )
+        print("\n❌ CRITICAL ERROR: Session string is invalid or expired! Generate a new session string.")
         sys.exit(1)
 
     print("Account is successfully online and monitoring private messages!")
     await client.run_until_disconnected()
-
 
 if __name__ == "__main__":
     asyncio.run(main())
