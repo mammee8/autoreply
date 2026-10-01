@@ -7,7 +7,7 @@ from telethon.sessions import StringSession
 # Fetch credentials from Environment Variables
 API_ID = int(os.getenv("API_ID", "32617470"))
 API_HASH = os.getenv("API_HASH", "19b2c75634d9ebcd7078b3ce54dbfe50")
-SESSION_STRING = os.getenv("STRING_SESSION")
+SESSION_STRING = os.getenv("1BJWap1sBu4dekJcrc7RYu3cDFvakOqF3kEgCXpnlb2hHpvZmCxPYsqWZYURKMozT8cbyxI2xqzYPC-09naIt93SLcLPZl7M5FsuZzuNU3hBdrehqkn6zie4kmKAlChNAMFnS4CLfbpmN1oundpz2Qf-BqyvL_pXUPRviQlVOrJ4FOzoWWTz5PfNdRo_zee7vIvCM1mrwkP35unb2v1WVALGwXxQlR9DVvn4BG-mmhL-MdjXuxdsRflo0oCqWPRGiTHHY2br4bVXoRlXXE_EX6XxVqferMsJdjz3fSrD9d22ztfzJN5BN0T-1flAnAUcn-id1M4mnqGZ0Pa8dDRWCFr8a80QUBRg=")
 
 if not SESSION_STRING:
     print(
