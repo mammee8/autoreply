@@ -4,8 +4,8 @@ from telethon import TelegramClient, events
 from telethon.sessions import StringSession
 
 # Account Credentials (from Environment Variables)
-API_ID = int(os.getenv("API_ID", "36389627"))
-API_HASH = os.getenv("API_HASH", "6f8dfeee1b5a7005214c1e7a71b40455")
+API_ID = int(os.getenv("API_ID", "32617470"))
+API_HASH = os.getenv("API_HASH", "19b2c75634d9ebcd7078b3ce54dbfe50")
 SESSION_STRING = os.getenv("STRING_SESSION")
 
 # Auto-reply message content
