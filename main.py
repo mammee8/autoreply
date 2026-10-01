@@ -6,7 +6,7 @@ from telethon.sessions import StringSession
 # Account Credentials (from Environment Variables)
 API_ID = int(os.getenv("API_ID", "32617470"))
 API_HASH = os.getenv("API_HASH", "19b2c75634d9ebcd7078b3ce54dbfe50")
-SESSION_STRING = os.getenv("STRING_SESSION")
+SESSION_STRING = os.getenv("1BJWap1sBu0jth4bb5A8dy7iQyEgDRL_R2DXL3uk0_XIU_2OaOrEZneahG4Tf9E2AFcYD6oQZSEANr2A2xtmP0jEw3Kc19cyNtlC27ipJqP8XcTm0UBpknjy5N50-focdCCuEXjiIJLfgfsMc7ryaQ92RVYe1Lu4NhIyPAuA7Qe_cD-8rC1gQsPvKj_GMwkgkj9AeLSKRpYq-CFLAhGTFtthzq6TuxT1UjXcO1nhnENkdFlsGtI1Uc1wi6_wjV9-rfW2_yfYsehNaAROOI1BSpPRnueYfKIcGZ4I3JX6twiaVE9UEqVSPqyCCrtpmwo-Da3cxNBhlgvSwjfVuFs1H45L-R8DRsNQ=")
 
 # Auto-reply message content
 REPLY_TEXT = """🔮 <b>✦ GUSE CAR EKUB ✦</b> 🔮
