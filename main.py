@@ -2,20 +2,41 @@ import asyncio
 import os
 import sys
 import time
+
 from telethon import TelegramClient, events
 from telethon.sessions import StringSession
 
-# Hardcoded fallback credentials to guarantee deployment
-API_ID = int(os.getenv("API_ID", "32617470"))
-API_HASH = os.getenv("API_HASH", "19b2c75634d9ebcd7078b3ce54dbfe50").strip()
 
-DEFAULT_SESSION = "1BJWap1sBu4dekJcrc7RYu3cDFvakOqF3kEgCXpnlb2hHpvZmCxPYsqWZYURKMozT8cbyxI2xqzYPC-09naIt93SLcLPZl7M5FsuZzuNU3hBdrehqkn6zie4kmKAlChNAMFnS4CLfbpmN1oundpz2Qf-BqyvL_pXUPRviQlVOrJ4FOzoWWTz5PfNdRo_zee7vIvCM1mrwkP35unb2v1WVALGwXxQlR9DVvn4BG-mmhL-MdjXuxdsRflo0oCqWPRGiTHHY2br4bVXoRlXXE_EX6XxVqferMsJdjz3fSrD9d22ztfzJN5BN0T-1flAnAUcn-id1M4mnqGZ0Pa8dDRWCFr8a80QUBRg="
+# ============================================================
+# TELEGRAM CONFIGURATION
+# ============================================================
 
-# Fetch environment variable or fallback to default
-raw_session = os.getenv("STRING_SESSION") or DEFAULT_SESSION
-SESSION_STRING = raw_session.strip().strip('"').strip("'")
+try:
+    API_ID = int(os.environ["API_ID"])
+except (KeyError, ValueError):
+    print("❌ ERROR: API_ID is missing or invalid.")
+    sys.exit(1)
 
-# Auto-reply text with payment details and links
+API_HASH = os.environ.get("API_HASH", "").strip()
+STRING_SESSION = os.environ.get("STRING_SESSION", "").strip()
+
+if not API_HASH:
+    print("❌ ERROR: API_HASH environment variable is missing.")
+    sys.exit(1)
+
+if not STRING_SESSION:
+    print("❌ ERROR: STRING_SESSION environment variable is missing.")
+    sys.exit(1)
+
+# Remove accidental quotes if Render variable was entered as:
+# "session_string"
+STRING_SESSION = STRING_SESSION.strip('"').strip("'")
+
+
+# ============================================================
+# AUTO-REPLY MESSAGE
+# ============================================================
+
 REPLY_TEXT = """🔮 <b>✦ GUSE CAR EKUB ✦</b> 🔮
 
 👇👇👇👇👇👇👇👇👇👇
@@ -27,56 +48,174 @@ REPLY_TEXT = """🔮 <b>✦ GUSE CAR EKUB ✦</b> 🔮
 👆👆👆👆👆👆👆👆👆👆
 
 💳 <b>Payment Details:</b>
-CBE > <code>1000777754142</code>
-Bontu kebeda & Tesfaye Daba
-Telebirr: <code>0922192323</code>"""
+CBE &gt; <code>1000777754142</code>
+Bontu kebeda &amp; Tesfaye Daba
+Telebirr: <code>0922192323</code>
+"""
 
-client = TelegramClient(StringSession(SESSION_STRING), API_ID, API_HASH)
 
-# Tracks user_id -> timestamp (in seconds) of last auto-reply sent
+# ============================================================
+# TELEGRAM CLIENT
+# ============================================================
+
+client = TelegramClient(
+    StringSession(STRING_SESSION),
+    API_ID,
+    API_HASH,
+)
+
+
+# ============================================================
+# RATE LIMIT
+# ============================================================
+
+# user_id -> timestamp of last reply
 user_last_replied = {}
-TWENTY_FOUR_HOURS = 86400  # 24 hours in seconds
+
+TWENTY_FOUR_HOURS = 24 * 60 * 60
 
 
-@client.on(events.NewMessage(incoming=True, func=lambda e: e.is_private))
-async def auto_reply(event):
-    sender = await event.get_sender()
-    if not sender or getattr(sender, "bot", False):
-        return
+# ============================================================
+# AUTO REPLY HANDLER
+# ============================================================
 
-    user_id = sender.id
-    current_time = time.time()
-
-    # Check if we replied to this user in the last 24 hours
-    if user_id in user_last_replied:
-        elapsed = current_time - user_last_replied[user_id]
-        if elapsed < TWENTY_FOUR_HOURS:
-            return  # Skip reply if 24 hours haven't passed yet
-
-    # Update or set the last replied timestamp for this user
-    user_last_replied[user_id] = current_time
-    await asyncio.sleep(1)
-
-    await event.reply(
-        message=REPLY_TEXT,
-        parse_mode="html",
-        link_preview=False,
+@client.on(
+    events.NewMessage(
+        incoming=True,
+        func=lambda event: event.is_private
     )
+)
+async def auto_reply(event):
 
+    try:
+        sender = await event.get_sender()
+
+        # Ignore users that cannot be identified
+        if not sender:
+            return
+
+        # Ignore bots
+        if getattr(sender, "bot", False):
+            return
+
+        user_id = sender.id
+        current_time = time.time()
+
+        # Check whether we already replied within 24 hours
+        last_reply = user_last_replied.get(user_id)
+
+        if last_reply is not None:
+            elapsed = current_time - last_reply
+
+            if elapsed < TWENTY_FOUR_HOURS:
+                return
+
+        # Save reply timestamp
+        user_last_replied[user_id] = current_time
+
+        # Small delay
+        await asyncio.sleep(1)
+
+        # Send reply
+        await event.reply(
+            message=REPLY_TEXT,
+            parse_mode="html",
+            link_preview=False,
+        )
+
+        print(f"✅ Auto-replied to user {user_id}")
+
+    except Exception as error:
+        print(f"❌ Error while replying: {error}")
+
+
+# ============================================================
+# MAIN
+# ============================================================
 
 async def main():
-    print("Starting autoresponder worker with 24h interval rate-limiter...")
-    await client.connect()
 
-    if not await client.is_user_authorized():
-        print(
-            "\n❌ CRITICAL ERROR: Session string is invalid or expired! Generate a new session string."
-        )
+    print("========================================")
+    print("🚀 Starting Telegram autoresponder")
+    print("========================================")
+
+    print("🔌 Connecting to Telegram...")
+
+    try:
+        await client.connect()
+
+    except Exception as error:
+        print(f"❌ Telegram connection failed: {error}")
         sys.exit(1)
 
-    print("Account is successfully online and monitoring private messages!")
+    # --------------------------------------------------------
+    # Check authentication
+    # --------------------------------------------------------
+
+    try:
+        authorized = await client.is_user_authorized()
+
+    except Exception as error:
+        print(f"❌ Failed to check Telegram authorization: {error}")
+        await client.disconnect()
+        sys.exit(1)
+
+    if not authorized:
+
+        print("")
+        print("========================================")
+        print("❌ TELEGRAM SESSION INVALID")
+        print("========================================")
+        print("")
+        print("Your STRING_SESSION is invalid, expired,")
+        print("revoked, or was generated with different")
+        print("API_ID/API_HASH credentials.")
+        print("")
+        print("Generate a NEW Telethon StringSession and")
+        print("replace STRING_SESSION in Render.")
+        print("")
+        print("========================================")
+
+        await client.disconnect()
+        sys.exit(1)
+
+    # --------------------------------------------------------
+    # Successfully authenticated
+    # --------------------------------------------------------
+
+    me = await client.get_me()
+
+    print("")
+    print("========================================")
+    print("✅ TELEGRAM ACCOUNT CONNECTED")
+    print("========================================")
+
+    if me:
+        print(f"👤 Name: {me.first_name or ''}")
+        print(f"🆔 User ID: {me.id}")
+        print(f"📱 Username: @{me.username}" if me.username else "📱 Username: None")
+
+    print("")
+    print("🤖 Autoresponder is running")
+    print("⏱️ Reply interval: 24 hours per user")
+    print("========================================")
+    print("")
+
+    # Keep the application running
     await client.run_until_disconnected()
 
 
+# ============================================================
+# START APPLICATION
+# ============================================================
+
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+
+    except KeyboardInterrupt:
+        print("\n🛑 Application stopped.")
+
+    except Exception as error:
+        print(f"\n❌ CRITICAL ERROR: {error}")
+        sys.exit(1)
